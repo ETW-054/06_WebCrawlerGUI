@@ -1,10 +1,12 @@
 import java.util.*;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class MotherSpider extends Thread {
     private final WebCrawlerGUI gui;
     private final Set<ChildSpider> childSpiders = new HashSet<>();
-    private final Set<ChildSpider> sleepyChildSpiders = new HashSet<>();
     private boolean isAllChildWait = false;
+    private final Lock lock = new ReentrantLock();
 
     protected final Set<String> pagesVisited = new HashSet<>();
     protected final List<String> pagesToVisit = new LinkedList<>();
@@ -74,7 +76,6 @@ public class MotherSpider extends Thread {
 
     private void removeChildSpider() {
         childSpiders.clear();
-        sleepyChildSpiders.clear();
     }
 
     private void showSearchResult() {
@@ -110,7 +111,7 @@ public class MotherSpider extends Thread {
     public String getNextUrl() {
         String nextUrl = pagesToVisit.remove(0);
 
-        while(pagesVisited.contains(nextUrl)) {
+        while (pagesVisited.contains(nextUrl)) {
             nextUrl = pagesToVisit.remove(0);
         }
         pagesVisited.add(nextUrl);
@@ -122,21 +123,10 @@ public class MotherSpider extends Thread {
         return pagesVisited.size() < getMaxSearchPages() && !isAllChildWait;
     }
 
-    public void addWaitChild(ChildSpider cs) {
-        sleepyChildSpiders.add(cs);
-        if (sleepyChildSpiders.size() == childSpiders.size()) {
-            isAllChildWait = true;
-        }
-        sleepyChildSpiders.notifyAll();
-    }
-
     public void wakeUpChild() {
-        for (ChildSpider cs:sleepyChildSpiders) {
-            if (!pagesToVisit.isEmpty()) {
-                cs.notify();
-                sleepyChildSpiders.remove(cs);
-            }
-        }
+        lock.lock();
+        notifyAll();
+        lock.unlock();
     }
 
     public void addToUsefulPages(PageInfo page) {
