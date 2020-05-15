@@ -3,10 +3,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static java.lang.Thread.sleep;
 
 public class SpiderLeg {
     private static final String USER_AGENT = "Chrome/81.0.4044.138";
@@ -24,9 +28,7 @@ public class SpiderLeg {
         this.url = url;
         try {
             Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);
-            Document htmlDocument = connection.get();
-            this.htmlDocument = htmlDocument;
-            //System.out.println(htmlDocument);
+            this.htmlDocument = connection.get();
 
             if (connection.response().statusCode() == 200) {
                 System.out.println("\nChild " + spiderNumber + " **Visiting** Received web page at " + url);
@@ -36,18 +38,55 @@ public class SpiderLeg {
                 System.out.println("Child " + spiderNumber + " **Failure** Retrieved something other than HTML");
                 return false;
             }
-
-            Elements linksOnPage = htmlDocument.select("a[href]");
-            for (Element link : linksOnPage) {
-                links.add(link.absUrl("href"));
-            }
             return true;
         } catch (Exception ex) {
             return false;
         }
     }
 
-    public List<String> getLinks() {
+    private void handleNewLinks() {
+        Elements linksOnPage = htmlDocument.select("a[href]");
+        Pattern pattern = Pattern.compile("(https://tw.news.yahoo.com/|https://udn.com/news/|https://udn.com/|" +
+                "https://www.chinatimes.com/|https://news.ltn.com.tw/|https://talk.ltn.com.tw/|" +
+                "https://www.ettoday.net/|https://www.setn.com/|https://www.cna.com.tw/|https://www.epochtimes.com/|" +
+                "https://tw.appledaily.com/|https://money.udn.com/|https://www.ttv.com.tw/|" +
+                "https://newtalk.tw/|https://www.thenewslens.com/|https://www.storm.mg/)([^&]|[0-9A-Za-z~!@#$%^*()\\-+=])*");
+        Matcher matcher;
+
+        for (Element link : linksOnPage) {
+            matcher = pattern.matcher(link.absUrl("href"));
+            while (matcher.find()) {
+                links.add(matcher.group());
+            }
+        }
+    }
+
+    private void handleYoutubeLinks() {
+        Elements linksOnPage = htmlDocument.select("a[href]");
+        for (Element link : linksOnPage) {
+            links.add(link.absUrl("href"));
+        }
+    }
+
+    private void handleShoppingLinks() {
+        Elements linksOnPage = htmlDocument.select("a[href]");
+        for (Element link : linksOnPage) {
+            links.add(link.absUrl("href"));
+        }
+    }
+
+    private void handleLinks(String searchClass) {
+        if (searchClass.equals("新聞")) {
+            handleNewLinks();
+        } else if (searchClass.equals("Youtube")) {
+            handleYoutubeLinks();
+        } else if (searchClass.equals("購物")) {
+            handleShoppingLinks();
+        }
+    }
+
+    public List<String> getLinks(String searchClass) {
+        handleLinks(searchClass);
         return links;
     }
 

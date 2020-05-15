@@ -4,7 +4,8 @@ import java.util.concurrent.locks.ReentrantLock;
 public class ChildSpider extends Thread {
     private final MotherSpider motherSpider;
     private final int spiderNumber;
-    private static final Lock lock = new ReentrantLock();
+    private static final Lock getPageLock = new ReentrantLock();
+    private static final Object LOCK = new Object();
 
     public ChildSpider(MotherSpider motherSpider, int spiderNumber) {
         this.motherSpider = motherSpider;
@@ -18,56 +19,51 @@ public class ChildSpider extends Thread {
             motherSpider.pagesVisited.remove(currentUrl);
             return;
         }
-        motherSpider.addPagesToVisitPages(leg.getLinks());
+        motherSpider.addPagesToVisitPages(leg.getLinks(motherSpider.getSearchClass()));
 
         boolean isSuccess = leg.searchForWord(motherSpider.getSearchKeyword());
 
         if (isSuccess) {
             System.out.println(String.format("Child " + spiderNumber + " *Success* Found word '%s' at %s",
                     motherSpider.getSearchKeyword(), currentUrl));
-            addToUsefulPages(leg.getPageInfo());
+            addThisPageToUsefulPages(leg.getPageInfo());
         } else {
             System.out.println("Child " + spiderNumber + " *Fail* Can't found " + motherSpider.getSearchKeyword());
         }
-
-        //Object[] objects = { number++, null, currentUrl, isSuccess };
-        //motherSpider.addSearchResultTableRowData(objects);
     }
 
     private void waitForPages() {
-        try {
-            //motherSpider.addWaitChild(this);
-            this.wait(500);
-        } catch (Exception ignored) { }
+        synchronized (LOCK) {
+            try {
+                LOCK.wait();
+            } catch (Exception ignored) { }
+        }
     }
 
-    private synchronized void wakeUpOther() {
-        notifyAll();
+    private void wakeUpOtherChild() {
+        synchronized (LOCK) {
+            LOCK.notifyAll();
+        }
     }
 
     public void run() {
-        while (motherSpider.isCommandContinueCrawl()) {
+        while (motherSpider.hasNotReachMaxSearchPages()) {
+            getPageLock.lock();
             String currentUrl;
-            lock.lock();
-            System.out.println(this.toString() + " get " + motherSpider.pagesToVisit.size());
             if (motherSpider.pagesToVisit.isEmpty()) {
-                lock.unlock();
+                getPageLock.unlock();
                 waitForPages();
                 continue;
             }
             currentUrl = motherSpider.getNextUrl();
-            lock.unlock();
-            search(currentUrl);
-            synchronized (this) {
+            getPageLock.unlock();
 
-            }
-            wakeUpOther();
-            //motherSpider.wakeUpChild();
-            //System.out.println("Child " + spiderNumber + ": " + motherSpider.getNextUrl());
+            search(currentUrl);
+            wakeUpOtherChild();
         }
     }
 
-    public void addToUsefulPages(PageInfo page) {
+    public void addThisPageToUsefulPages(PageInfo page) {
         motherSpider.addToUsefulPages(page);
     }
 }

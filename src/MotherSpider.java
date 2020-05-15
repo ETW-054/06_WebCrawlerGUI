@@ -5,7 +5,6 @@ import java.util.concurrent.locks.ReentrantLock;
 public class MotherSpider extends Thread {
     private final WebCrawlerGUI gui;
     private final Set<ChildSpider> childSpiders = new HashSet<>();
-    private boolean isAllChildWait = false;
     private final Lock lock = new ReentrantLock();
 
     protected final Set<String> pagesVisited = new HashSet<>();
@@ -13,29 +12,44 @@ public class MotherSpider extends Thread {
 
     protected final Set<PageInfo> usefulPages = new HashSet<>();
 
-
+    /// Constructor
     public MotherSpider(WebCrawlerGUI gui) {
         this.gui = gui;
     }
 
+    // From GUI
     public int getMaxSearchPages() {
         return gui.getMaxSearchPages();
     }
 
+    // From GUI
     public String getSearchKeyword() { return gui.getSearchKeyword(); }
 
     private void clearVisitedPages() {
         pagesVisited.clear();
     }
 
+    private List<String> getNewsUrl() {
+        return new LinkedList<>() {{
+            add("https://www.google.com.tw/search?q="+ getSearchKeyword() + "&safe=strict&tbm=nws&start=0");
+            add("https://www.google.com.tw/search?q="+ getSearchKeyword() + "&safe=strict&tbm=nws&start=10");
+            add("https://www.google.com.tw/search?q="+ getSearchKeyword() + "&safe=strict&tbm=nws&start=20");
+        }};
+    }
+
+    private List<String> getYoutubeUrl() {
+
+        return null;
+    }
+
+    private List<String> getShoppingUrl() {
+
+        return null;
+    }
+
     private void resetToVisitPages() {
         pagesToVisit.clear();
-        pagesToVisit.addAll(
-                new LinkedList<>() {{
-                    add("https://zh.wikipedia.org/wiki/維基百科");
-                    add("https://zh.wikipedia.org/wiki/Wiki");
-                }}
-        );
+        pagesToVisit.addAll(getNewsUrl());
     }
 
     private void clearPages() {
@@ -44,16 +58,17 @@ public class MotherSpider extends Thread {
         usefulPages.clear();
     }
 
+    // From GUI
     private boolean isChildSpidersLessThanThreadsLimit() {
         return childSpiders.size() < gui.getMaxSearchThreads();
     }
 
+    // From GUI
     private boolean isChildSpidersLessThanPagesLimit() {
         return childSpiders.size() < gui.getMaxSearchPages();
     }
 
     private void createChildSpiders() {
-        isAllChildWait = false;
         int childCount = 0;
         while (isChildSpidersLessThanThreadsLimit() && isChildSpidersLessThanPagesLimit()) {
             childSpiders.add(new ChildSpider(this, childCount++));
@@ -78,6 +93,16 @@ public class MotherSpider extends Thread {
         childSpiders.clear();
     }
 
+    // To GUI
+    public void addSearchResultTableRowData(Object[] objects) {
+        gui.addRowDataToSearchResultTable(objects);
+    }
+
+    // To GUI
+    public void removeAllSearchResultTableRow() {
+        gui.removeAllSearchResultTableRow();
+    }
+
     private void showSearchResult() {
         PageInfo[] arr = new PageInfo[usefulPages.size()];
         usefulPages.toArray(arr);
@@ -87,14 +112,6 @@ public class MotherSpider extends Thread {
             Object[] objects = { count++, page.title, page.link, page.weight + page.keywordCount };
             addSearchResultTableRowData(objects);
         }
-    }
-
-    public void addSearchResultTableRowData(Object[] objects) {
-        gui.addRowDataToSearchResultTable(objects);
-    }
-
-    public void removeAllSearchResultTableRow() {
-        gui.removeAllSearchResultTableRow();
     }
 
     public void assignChildSpiders() {
@@ -119,22 +136,30 @@ public class MotherSpider extends Thread {
         return nextUrl;
     }
 
-    public boolean isCommandContinueCrawl() {
-        return pagesVisited.size() < getMaxSearchPages() && !isAllChildWait;
+    public boolean hasNotReachMaxSearchPages() {
+        return pagesVisited.size() < getMaxSearchPages();
     }
 
-    public void wakeUpChild() {
-        lock.lock();
-        notifyAll();
-        lock.unlock();
+    private boolean isSamePage(PageInfo left, PageInfo right) {
+        return left.title.equals(right.title) || left.link.equals(right.link);
     }
 
-    public void addToUsefulPages(PageInfo page) {
-        usefulPages.add(page);
+    public void addToUsefulPages(PageInfo newPage) {
+        for (PageInfo page:usefulPages) {
+            if (isSamePage(page, newPage)) {
+                return;
+            }
+        }
+        usefulPages.add(newPage);
     }
 
     public void addPagesToVisitPages(List<String> pages) {
         pagesToVisit.addAll(pages);
+    }
+
+    // From GUI
+    public String getSearchClass() {
+        return gui.getSearchClass();
     }
 
     public void run() {

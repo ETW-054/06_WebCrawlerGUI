@@ -60,12 +60,10 @@ public class WebCrawlerGUI extends JDialog {
     }
 
     private void onStartCrawl() {
-        // add your code here
         motherSpider.assignChildSpiders();
     }
 
     private void onExit() {
-        // add your code here if necessary
         dispose();
     }
 
@@ -113,6 +111,10 @@ public class WebCrawlerGUI extends JDialog {
     public void showSearchComplete() {
         JOptionPane.showMessageDialog(null,
                 "Search Complete!", "Search Complete!", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public String getSearchClass() {
+        return searchClassComboBox.getSelectedItem().toString();
     }
 
     /**
