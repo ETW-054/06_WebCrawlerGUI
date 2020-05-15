@@ -37,8 +37,12 @@ public class ChildSpider extends Thread {
     private void waitForPages() {
         try {
             //motherSpider.addWaitChild(this);
-            this.wait();
+            this.wait(500);
         } catch (Exception ignored) { }
+    }
+
+    private synchronized void wakeUpOther() {
+        notifyAll();
     }
 
     public void run() {
@@ -54,7 +58,11 @@ public class ChildSpider extends Thread {
             currentUrl = motherSpider.getNextUrl();
             lock.unlock();
             search(currentUrl);
-            motherSpider.wakeUpChild();
+            synchronized (this) {
+
+            }
+            wakeUpOther();
+            //motherSpider.wakeUpChild();
             //System.out.println("Child " + spiderNumber + ": " + motherSpider.getNextUrl());
         }
     }
