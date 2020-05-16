@@ -2,15 +2,10 @@ import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import static java.lang.Thread.sleep;
 
 public class SpiderLeg {
     private static final String USER_AGENT = "Chrome/81.0.4044.138";
@@ -18,7 +13,7 @@ public class SpiderLeg {
     private final List<String> links = new LinkedList<>();
     private Document htmlDocument;
     private final int spiderNumber;
-    private String keyword;
+    private String searchKeyword;
 
     public SpiderLeg(int spiderNumber) {
         this.spiderNumber = spiderNumber;
@@ -63,8 +58,14 @@ public class SpiderLeg {
 
     private void handleYoutubeLinks() {
         Elements linksOnPage = htmlDocument.select("a[href]");
+        Pattern pattern = Pattern.compile("https://www.youtube.com/watch\\?.*");
+        Matcher matcher;
+
         for (Element link : linksOnPage) {
-            links.add(link.absUrl("href"));
+            matcher = pattern.matcher(link.absUrl("href"));
+            while (matcher.find()) {
+                links.add(matcher.group());
+            }
         }
     }
 
@@ -90,24 +91,33 @@ public class SpiderLeg {
         return links;
     }
 
-    public boolean searchForWord(String searchWord) {
+    public boolean searchForWord(String searchKeyword) {
         if (htmlDocument == null) {
             System.out.println("Child " + spiderNumber + " Error !! Empty page");
             return false;
         }
-        this.keyword = searchWord;
-        System.out.println("Child " + spiderNumber + " Searching for the word '" + searchWord + "'...");
+        this.searchKeyword = searchKeyword;
+        System.out.println("Child " + spiderNumber + " Searching for the word '" + searchKeyword + "'...");
 
-        String bodyText = htmlDocument.body().text();
-        return bodyText.toLowerCase().contains((searchWord.toLowerCase()));
+        String text = htmlDocument.toString().toLowerCase();
+        String[] spt = searchKeyword.split("(\\s)*");
+        for (String s:spt) {
+            if (text.contains(s.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private int countKeyword() {
-        Pattern pattern = Pattern.compile(keyword);
-        Matcher matcher = pattern.matcher(htmlDocument.toString());
         int count = 0;
-        while (matcher.find()) {
-            count++;
+        String[] spt = searchKeyword.split("(\\s)*");
+        for (String s:spt) {
+            Pattern pattern = Pattern.compile(s.toLowerCase());
+            Matcher matcher = pattern.matcher(htmlDocument.toString().toLowerCase());
+            while (matcher.find()) {
+                count++;
+            }
         }
         return count;
     }

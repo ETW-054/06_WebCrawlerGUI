@@ -73,9 +73,9 @@ public class WebCrawlerGUI extends JDialog {
         searchResultTable = new JTable(srtm);
         searchResultTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         searchResultTable.getColumnModel().getColumn(0).setPreferredWidth(20);
-        searchResultTable.getColumnModel().getColumn(1).setPreferredWidth(60);
-        searchResultTable.getColumnModel().getColumn(2).setPreferredWidth(250);
-        searchResultTable.getColumnModel().getColumn(3).setPreferredWidth(30);
+        searchResultTable.getColumnModel().getColumn(1).setPreferredWidth(300);
+        searchResultTable.getColumnModel().getColumn(2).setPreferredWidth(300);
+        searchResultTable.getColumnModel().getColumn(3).setPreferredWidth(20);
     }
 
     public void execute() {
