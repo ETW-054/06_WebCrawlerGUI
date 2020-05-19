@@ -26,9 +26,7 @@ public class SpiderLeg {
             Connection connection = Jsoup.connect(url).userAgent(USER_AGENT);
             this.htmlDocument = connection.get();
 
-            if (connection.response().statusCode() == 200) {
-
-            }
+            //if (connection.response().statusCode() == 200) { }
 
             return connection.response().contentType().contains("text/html");
         } catch (Exception ex) {
@@ -92,8 +90,9 @@ public class SpiderLeg {
 
     private int countKeyword() {
         int count = 0;
-        String[] spt = searchKeyword.split("(\\s)*"); // 關鍵字有可能是以空白分開，因此這邊要將其拆開搜尋
+        String[] spt = searchKeyword.split("\\s+"); // 關鍵字有可能是以空白分開，因此這邊要將其拆開搜尋
         for (String s:spt) {
+            System.out.println(s);
             Pattern pattern = Pattern.compile(s.toLowerCase());
             Matcher matcher = pattern.matcher(htmlDocument.toString().toLowerCase());
             while (matcher.find()) {
