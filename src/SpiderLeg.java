@@ -12,11 +12,12 @@ public class SpiderLeg {
     private String url;
     private final List<String> links = new LinkedList<>();
     private Document htmlDocument;
-    private final int spiderNumber;
+    private final String threadNumber;
     private String searchKeyword;
 
-    public SpiderLeg(int spiderNumber) {
-        this.spiderNumber = spiderNumber;
+    public SpiderLeg(String threadNumber, String searchKeyword) {
+        this.threadNumber = threadNumber;
+        this.searchKeyword = searchKeyword;
     }
 
     public boolean isCrawl(String url) {
@@ -26,14 +27,10 @@ public class SpiderLeg {
             this.htmlDocument = connection.get();
 
             if (connection.response().statusCode() == 200) {
-                System.out.println("\nChild " + spiderNumber + " **Visiting** Received web page at " + url);
+
             }
 
-            if (!connection.response().contentType().contains("text/html")) {
-                System.out.println("Child " + spiderNumber + " **Failure** Retrieved something other than HTML");
-                return false;
-            }
-            return true;
+            return connection.response().contentType().contains("text/html");
         } catch (Exception ex) {
             return false;
         }
@@ -48,6 +45,7 @@ public class SpiderLeg {
                 "https://newtalk.tw/|https://www.thenewslens.com/|https://www.storm.mg/)([^&]|[0-9A-Za-z~!@#$%^*()\\-+=])*");
         Matcher matcher;
 
+        // 將符合上述regular expression的網址加入 to visit list
         for (Element link : linksOnPage) {
             matcher = pattern.matcher(link.absUrl("href"));
             while (matcher.find()) {
@@ -61,6 +59,7 @@ public class SpiderLeg {
         Pattern pattern = Pattern.compile("https://www.youtube.com/watch\\?.*");
         Matcher matcher;
 
+        // 將符合上述regular expression的網址加入 to visit list
         for (Element link : linksOnPage) {
             matcher = pattern.matcher(link.absUrl("href"));
             while (matcher.find()) {
@@ -91,27 +90,9 @@ public class SpiderLeg {
         return links;
     }
 
-    public boolean searchForWord(String searchKeyword) {
-        if (htmlDocument == null) {
-            System.out.println("Child " + spiderNumber + " Error !! Empty page");
-            return false;
-        }
-        this.searchKeyword = searchKeyword;
-        System.out.println("Child " + spiderNumber + " Searching for the word '" + searchKeyword + "'...");
-
-        String text = htmlDocument.toString().toLowerCase();
-        String[] spt = searchKeyword.split("(\\s)*");
-        for (String s:spt) {
-            if (text.contains(s.toLowerCase())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private int countKeyword() {
         int count = 0;
-        String[] spt = searchKeyword.split("(\\s)*");
+        String[] spt = searchKeyword.split("(\\s)*"); // 關鍵字有可能是以空白分開，因此這邊要將其拆開搜尋
         for (String s:spt) {
             Pattern pattern = Pattern.compile(s.toLowerCase());
             Matcher matcher = pattern.matcher(htmlDocument.toString().toLowerCase());
@@ -132,6 +113,8 @@ public class SpiderLeg {
             pageInfo.title = spt[1];
         }
         pageInfo.keywordCount = countKeyword();
+
+        System.out.println(threadNumber + "title: " + pageInfo.title + " link: " + pageInfo.link);
 
         return pageInfo;
     }

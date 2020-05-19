@@ -1,7 +1,11 @@
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static java.lang.Thread.sleep;
 
 public class ChildSpidersCommander {
-    private final Set<ChildSpider> childSpiders = new HashSet<>();
+    protected final Set<ChildSpider> childSpiders = new HashSet<>();
     protected final Set<String> linksVisited = new HashSet<>();
     protected final List<String> linksToVisit = new LinkedList<>();
     protected final Set<PageInfo> usefulPages = new HashSet<>();
@@ -10,12 +14,17 @@ public class ChildSpidersCommander {
     protected final String searchKeyword;
     protected final int maxPages;
     protected final int maxThreads;
+    protected final Object LOCK = new Object();
 
     public ChildSpidersCommander(String searchKeyword, String searchClass, int maxPages, int maxThreads) {
         this.searchKeyword = searchKeyword;
         this.searchClass = searchClass;
         this.maxPages = maxPages;
         this.maxThreads = maxThreads;
+    }
+
+    public Set<PageInfo> getUsefulPages() {
+        return usefulPages;
     }
 
     private List<String> getNewsUrl() {
@@ -58,51 +67,33 @@ public class ChildSpidersCommander {
         return childSpiders.size() < maxPages;
     }
 
-    private void createChildSpiders() {
-        int childCount = 0;
-        while (isNotMatchMaxThreads() && isNotMatchMaxPages()) {
-            childSpiders.add(new ChildSpider(this, childCount++));
-        }
-    }
-
-    private void commandChildSpiderStartCrawl() {
-        for (ChildSpider cs : childSpiders) {
-            cs.start();
-        }
-    }
-
-    private void waitForAllChildSpiderStop() {
-        try {
-            for (ChildSpider cs : childSpiders) {
-                cs.join();
+    public void addToVisitLinks(List<String> links) {
+        synchronized (LOCK) {
+            for (String link : links) {
+                if (!linksToVisit.contains(link)) {
+                    linksToVisit.add(link);
+                }
             }
-        } catch (Exception ignored) { }
-    }
-
-    private void removeChildSpider() {
-        childSpiders.clear();
-    }
-
-    public String getNextUrl() {
-        String nextUrl = linksToVisit.remove(0);
-
-        while (linksVisited.contains(nextUrl)) {
-            nextUrl = linksToVisit.remove(0);
         }
-        linksVisited.add(nextUrl);
-
-        return nextUrl;
     }
 
-    public boolean hasNotReachMaxSearchPages() {
-        return linksVisited.size() < maxPages;
+    private boolean isDefaultLink(String link) {
+        Pattern pattern = Pattern.compile("(https://www.google.com/search\\?q=|" +
+                "https://www.youtube.com/results\\?search_query=).*");
+        Matcher matcher = pattern.matcher(link);
+
+        return matcher.find();
     }
 
     private boolean isSamePage(PageInfo left, PageInfo right) {
         return left.title.equals(right.title) || left.link.equals(right.link);
     }
 
-    public void addToUsefulPages(PageInfo newPage) {
+    public void addUsefulPage(PageInfo newPage) {
+        if (isDefaultLink(newPage.link)) {
+            return;
+        }
+
         for (PageInfo page:usefulPages) {
             if (isSamePage(page, newPage)) {
                 return;
@@ -111,19 +102,46 @@ public class ChildSpidersCommander {
         usefulPages.add(newPage);
     }
 
-    public void addToVisitLinks(List<String> pages) {
-        linksToVisit.addAll(pages);
+    public String getNextUrl() {
+        String nextUrl;
+        nextUrl = linksToVisit.remove(0);
+
+        while (linksVisited.contains(nextUrl)) {
+            nextUrl = linksToVisit.remove(0);
+        }
+
+        if (!isDefaultLink(nextUrl)) {
+            linksVisited.add(nextUrl);
+        }
+        return nextUrl;
     }
 
-    public Set<PageInfo> getUsefulPages() {
-        return usefulPages;
+    private void create() {
+        do {
+            while (childSpiders.size() < maxThreads && !linksToVisit.isEmpty() && linksVisited.size() < maxPages) {
+                synchronized (LOCK) {
+                    ChildSpider cs = new ChildSpider(this, getNextUrl());
+                    childSpiders.add(cs);
+                    cs.start();
+                }
+            }
+            try {
+                sleep(100);
+            } catch (Exception ignore) { }
+        } while ((!childSpiders.isEmpty() || !linksToVisit.isEmpty()) && linksVisited.size() < maxPages);
+    }
+
+    private void waitForAllChildSpiderStop() {
+        try {
+            while (!childSpiders.isEmpty()) {
+                sleep(100);
+            }
+        } catch (Exception ignored) { }
     }
 
     public void execute() {
         setToVisitPages();
-        createChildSpiders();
-        commandChildSpiderStartCrawl();
+        create();
         waitForAllChildSpiderStop();
-        removeChildSpider();
     }
 }
