@@ -1,11 +1,38 @@
+import java.sql.Time;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class MotherSpider extends Thread {
+    public static class SearchHistory {
+        String searchClass;
+        String searchKeyword;
+        int maxSearchPages;
+
+        SearchHistory(String searchClass, String searchKeyword, int maxSearchPages) {
+            this.searchClass = searchClass;
+            this.searchKeyword = searchKeyword;
+            this.maxSearchPages = maxSearchPages;
+        }
+
+        public String toString() {
+            return "class: " + searchClass + " keyword: " + searchKeyword + " max pages: " + maxSearchPages;
+        }
+    }
+
+    public static class SearchResultHistory {
+        Date date;
+        PageInfo[] pagesInfo;
+
+        SearchResultHistory(Date date, PageInfo[] pagesInfo) {
+            this.date = date;
+            this.pagesInfo = pagesInfo;
+        }
+    }
+
     private final WebCrawlerGUI gui;
 
-    protected final Set<PageInfo> usefulPages = new HashSet<>();
+    protected Hashtable<SearchHistory, SearchResultHistory> searchHistory = new Hashtable<>();
 
     /// Constructor
     public MotherSpider(WebCrawlerGUI gui) {
@@ -34,7 +61,7 @@ public class MotherSpider extends Thread {
         gui.removeAllSearchResultTableRow();
     }
 
-    private Set<PageInfo> findPages() {
+    private Set<PageInfo> searchPages() {
         ChildSpidersCommander commander = new ChildSpidersCommander(
                 getSearchKeyword(), getSearchClass(), getMaxSearchPages(), getMaxSearchThreads());
 
@@ -43,21 +70,28 @@ public class MotherSpider extends Thread {
         return commander.getUsefulPages();
     }
 
-    private void showSearchResult() {
-        PageInfo[] arr = new PageInfo[usefulPages.size()];
-        usefulPages.toArray(arr);
-        Arrays.sort(arr);
-        int count = 1;
-        for (PageInfo page:arr) {
-            Object[] objects = { count++, page.title, page.link, page.weight + page.keywordCount };
-            addSearchResultTableRowData(objects);
+    private PageInfo[] findPages() {
+        SearchHistory sh = new SearchHistory(getSearchClass(), getSearchKeyword(), getMaxSearchPages());
+        System.out.println(sh.toString());
+        if (searchHistory.containsKey(sh)) {
+            System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> contain");
+            return searchHistory.get(sh).pagesInfo;
         }
+
+        Set<PageInfo> searchResult = searchPages();
+        PageInfo[] arr = new PageInfo[searchResult.size()];
+        searchResult.toArray(arr);
+        Arrays.sort(arr);
+
+        SearchResultHistory srh = new SearchResultHistory(new Date(), arr);
+        searchHistory.put(sh, srh);
+        System.out.println("new " + sh.toString());
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> PPPPPPPPP");
+        System.out.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> " + searchHistory.size());
+        return arr;
     }
 
-    private void showSearchResult(Set<PageInfo> pages) {
-        PageInfo[] arr = new PageInfo[pages.size()];
-        pages.toArray(arr);
-        Arrays.sort(arr);
+    private void showSearchResult(PageInfo[] arr) {
         int count = 1;
         for (PageInfo page:arr) {
             Object[] objects = { count++, page.title, page.link, page.weight + page.keywordCount };
@@ -67,8 +101,7 @@ public class MotherSpider extends Thread {
 
     public void assignChildSpiders() {
         removeAllSearchResultTableRow();
-        Set<PageInfo> searchResult = findPages();
-        showSearchResult(searchResult);
+        showSearchResult(findPages());
         gui.showSearchComplete();
     }
 

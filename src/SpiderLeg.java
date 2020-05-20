@@ -92,7 +92,6 @@ public class SpiderLeg {
         int count = 0;
         String[] spt = searchKeyword.split("\\s+"); // 關鍵字有可能是以空白分開，因此這邊要將其拆開搜尋
         for (String s:spt) {
-            System.out.println(s);
             Pattern pattern = Pattern.compile(s.toLowerCase());
             Matcher matcher = pattern.matcher(htmlDocument.toString().toLowerCase());
             while (matcher.find()) {
@@ -113,7 +112,7 @@ public class SpiderLeg {
         }
         pageInfo.keywordCount = countKeyword();
 
-        System.out.println(threadNumber + "title: " + pageInfo.title + " link: " + pageInfo.link);
+        //System.out.println(threadNumber + "title: " + pageInfo.title + " link: " + pageInfo.link);
 
         return pageInfo;
     }
