@@ -18,6 +18,30 @@ public class MotherSpider extends Thread {
         public String toString() {
             return "class: " + searchClass + " keyword: " + searchKeyword + " max pages: " + maxSearchPages;
         }
+
+        private boolean isSameClass(SearchHistory right) {
+            return searchClass.equals(right.searchClass);
+        }
+
+        private boolean isSameKeyword(SearchHistory right) {
+            return searchKeyword.equals(right.searchKeyword);
+        }
+
+        private boolean isSameMaxPages(SearchHistory right) {
+            return maxSearchPages == right.maxSearchPages;
+        }
+
+        public boolean equals(Object o) {
+            if (o instanceof SearchHistory) {
+                SearchHistory right = (SearchHistory) o;
+                return isSameClass(right) && isSameKeyword(right) && isSameMaxPages(right);
+            }
+            return false;
+        }
+
+        public int hashCode() {
+            return searchClass.hashCode() + searchKeyword.hashCode() + maxSearchPages;
+        }
     }
 
     public static class SearchResultHistory {
@@ -32,7 +56,7 @@ public class MotherSpider extends Thread {
 
     private final WebCrawlerGUI gui;
 
-    protected Hashtable<SearchHistory, SearchResultHistory> searchHistory = new Hashtable<>();
+    protected ConcurrentHashMap<SearchHistory, SearchResultHistory> searchHistory = new ConcurrentHashMap<>();
 
     /// Constructor
     public MotherSpider(WebCrawlerGUI gui) {
