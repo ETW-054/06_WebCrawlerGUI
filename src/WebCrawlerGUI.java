@@ -6,8 +6,6 @@ import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.LinkedList;
-import java.util.List;
 
 public class WebCrawlerGUI extends JDialog {
     private MotherSpider motherSpider;
@@ -24,6 +22,9 @@ public class WebCrawlerGUI extends JDialog {
     private JButton lastButton;
     private JButton frontButton;
     private JButton nextButton;
+    private JComboBox<Integer> pageLimitComboBox;
+    private JLabel totalSearchedWebPagesLabel;
+    private JLabel currentPageNumberLabel;
 
     public WebCrawlerGUI() {
         $$$setupUI$$$();
@@ -57,6 +58,45 @@ public class WebCrawlerGUI extends JDialog {
                 onExit();
             }
         }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        firstButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+            }
+        });
+
+        firstButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                motherSpider.toFirstPage();
+            }
+        });
+
+        frontButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                motherSpider.toFrontPage();
+            }
+        });
+
+        nextButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                motherSpider.toNextPage();
+            }
+        });
+        lastButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                motherSpider.toLastPage();
+            }
+        });
+        pageLimitComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                motherSpider.setPageLimit(getPageLimit());
+            }
+        });
     }
 
     private void onStartCrawl() {
@@ -80,12 +120,11 @@ public class WebCrawlerGUI extends JDialog {
 
     public void execute() {
         motherSpider = new MotherSpider(this);
-        motherSpider.start();
         this.pack();
         this.setVisible(true);
     }
 
-    public int getMaxSearchPages() {
+    public int getMaxSearchLimit() {
         return Integer.parseInt(searchLimitTextField.getText());
     }
 
@@ -97,7 +136,7 @@ public class WebCrawlerGUI extends JDialog {
         return searchKeywordTextField.getText();
     }
 
-    public void addRowDataToSearchResultTable(Object[] objects) {
+    public void addSearchResultTableRow(Object[] objects) {
         srtm.addRow(objects);
     }
 
@@ -115,6 +154,16 @@ public class WebCrawlerGUI extends JDialog {
 
     public String getSearchClass() {
         return searchClassComboBox.getSelectedItem().toString();
+    }
+
+    public int getPageLimit() { return Integer.parseInt(pageLimitComboBox.getSelectedItem().toString()); }
+
+    public void setTotalSearchedWebPagesLabel(String text) {
+        totalSearchedWebPagesLabel.setText(text);
+    }
+
+    public void setCurrentPageNumberLabel(int pageNumber) {
+        currentPageNumberLabel.setText(String.valueOf(pageNumber));
     }
 
     /**

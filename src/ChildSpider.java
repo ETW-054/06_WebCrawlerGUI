@@ -7,7 +7,7 @@ public class ChildSpider extends Thread {
         this.currentUrl = link;
     }
 
-    private void addUsefulPage(PageInfo newPage) {
+    private void addUsefulPage(WebPageInfo newPage) {
         commander.addUsefulPage(newPage);
     }
 
@@ -19,7 +19,7 @@ public class ChildSpider extends Thread {
         }
         commander.addToVisitLinks(leg.getLinks(commander.searchClass));
 
-        PageInfo page = leg.getPageInfo();
+        WebPageInfo page = leg.getPageInfo();
 
         if (page.keywordCount != 0) {
             addUsefulPage(page);

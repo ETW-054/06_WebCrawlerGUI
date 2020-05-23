@@ -101,8 +101,8 @@ public class SpiderLeg {
         return count;
     }
 
-    public PageInfo getPageInfo() {
-        PageInfo pageInfo = new PageInfo();
+    public WebPageInfo getPageInfo() {
+        WebPageInfo pageInfo = new WebPageInfo();
         pageInfo.link = url;
 
         Elements title = htmlDocument.select("title");

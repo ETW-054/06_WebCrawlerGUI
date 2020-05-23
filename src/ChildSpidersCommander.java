@@ -3,11 +3,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import static java.lang.Thread.sleep;
 
-public class ChildSpidersCommander {
+public class ChildSpidersCommander extends Thread {
     protected final Set<ChildSpider> childSpiders = new HashSet<>();
     protected final Set<String> linksVisited = new HashSet<>();
     protected final List<String> linksToVisit = new LinkedList<>();
-    protected final Set<PageInfo> usefulPages = new HashSet<>();
+    protected final Set<WebPageInfo> usefulPages = new HashSet<>();
 
     protected final String searchClass;
     protected final String searchKeyword;
@@ -22,7 +22,7 @@ public class ChildSpidersCommander {
         this.maxThreads = maxThreads;
     }
 
-    public Set<PageInfo> getUsefulPages() {
+    public Set<WebPageInfo> getUsefulPages() {
         return usefulPages;
     }
 
@@ -56,16 +56,6 @@ public class ChildSpidersCommander {
         }
     }
 
-    // From GUI
-    private boolean isNotMatchMaxThreads() {
-        return childSpiders.size() < maxThreads;
-    }
-
-    // From GUI
-    private boolean isNotMatchMaxPages() {
-        return childSpiders.size() < maxPages;
-    }
-
     public void addToVisitLinks(List<String> links) {
         synchronized (LOCK) {
             for (String link : links) {
@@ -84,16 +74,16 @@ public class ChildSpidersCommander {
         return matcher.find();
     }
 
-    private boolean isSamePage(PageInfo left, PageInfo right) {
+    private boolean isSamePage(WebPageInfo left, WebPageInfo right) {
         return left.title.equals(right.title) || left.link.equals(right.link);
     }
 
-    public void addUsefulPage(PageInfo newPage) {
+    public void addUsefulPage(WebPageInfo newPage) {
         if (isDefaultLink(newPage.link)) {
             return;
         }
 
-        for (PageInfo page:usefulPages) {
+        for (WebPageInfo page:usefulPages) {
             if (isSamePage(page, newPage)) {
                 return;
             }
@@ -138,7 +128,7 @@ public class ChildSpidersCommander {
         } catch (Exception ignored) { }
     }
 
-    public void execute() {
+    public void run() {
         setToVisitPages();
         create();
         waitForAllChildSpiderStop();

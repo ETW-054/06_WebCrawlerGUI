@@ -21,8 +21,7 @@ public class SearchResultTableModel extends DefaultTableModel {
         //data[row][col] = (col == 0 ? row : value);
         @SuppressWarnings("unchecked")
         Vector<Object> rowVector = dataVector.elementAt(row);
-        if (col == 0) { rowVector.setElementAt(row, col); }
-        else { rowVector.setElementAt(value, col); }
+        rowVector.setElementAt(value, col);
         fireTableCellUpdated(row, col);
     }
 
