@@ -7,23 +7,14 @@ public class ChildSpider extends Thread {
         this.currentUrl = link;
     }
 
-    private void addUsefulPage(WebPageInfo newPage) {
-        commander.addUsefulPage(newPage);
-    }
-
     public void search() {
-        SpiderLeg leg = new SpiderLeg(this.toString(), commander.searchKeyword);
+        SpiderLeg leg = new SpiderLeg(commander.wpCommand, commander.searchKeyword);
 
         if (!leg.isCrawl(currentUrl)) {
             return;
         }
-        commander.addToVisitLinks(leg.getLinks(commander.wpCommand.toString()));
-
-        WebPageInfo page = leg.getPageInfo();
-
-        if (page.keywordCount != 0) {
-            addUsefulPage(page);
-        }
+        commander.addToVisitLinks(leg.getLinks());
+        commander.addUsefulPage(leg.getWebPageInfo());
     }
 
     public void run() {

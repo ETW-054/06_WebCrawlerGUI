@@ -10,19 +10,19 @@ public class SearchResultTableModel extends DefaultTableModel {
     //Object[][] data = {{ 1, null, null, null }};
 
     public int getColumnCount() { return columns.length; }
-    //public int getRowCount() { return data.length; }
-    //public Object getValueAt(int row, int col) { return col == 0 ? row + 1 : data[row][col]; }
     public String getColumnName(int col) { return columns[col]; }
     public Class getColumnClass(int col) { return types[col]; }
-    public boolean isCellEditable(int row, int col) { return false; }
-
+    public boolean isCellEditable(int row, int col) {
+        return 1 <= col && col <= 2;
+    }
 
     public void setValueAt(Object value, int row, int col) {
-        //data[row][col] = (col == 0 ? row : value);
-        @SuppressWarnings("unchecked")
-        Vector<Object> rowVector = dataVector.elementAt(row);
-        rowVector.setElementAt(value, col);
-        fireTableCellUpdated(row, col);
+        if (!isCellEditable(row, col)) {
+            @SuppressWarnings("unchecked")
+            Vector<Object> rowVector = dataVector.elementAt(row);
+            rowVector.setElementAt(value, col);
+            fireTableCellUpdated(row, col);
+        }
     }
 
 }

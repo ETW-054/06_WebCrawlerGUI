@@ -6,7 +6,7 @@ import static java.lang.Integer.min;
 
 public class MotherSpider {
     private final WebCrawlerGUI gui;
-    protected ConcurrentHashMap<SearchSettingHistory, SearchResultHistory> searchHistory = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<SearchSettingHistory, SearchResultHistory> searchHistory = new ConcurrentHashMap<>();
     private SearchResultHistory searchResult;
     private int currentPageCount;
     private int maxPageCount;
@@ -71,17 +71,18 @@ public class MotherSpider {
     }
 
     private void findPages() {
-        SearchSettingHistory ssh = new SearchSettingHistory(getSearchClass(), getSearchKeyword(), getMaxSearchLimit());
+        SearchSettingHistory ssh = new SearchSettingHistory(getSearchClass(), getSearchKeyword());
 
         if (searchHistory.containsKey(ssh)) {
             SearchResultHistory srh =  searchHistory.get(ssh);
-            if (isUpdateToDate(srh.date) && srh.wpsInfo.length > 0) {
+            // 時間不超過5分鐘 && 歷史記錄大於0筆 && 歷史記錄大於目前最大限制+5
+            if (isUpdateToDate(srh.date) && srh.wpsInfo.length > 0 && (srh.maxSearchLimit + 5 >= getMaxSearchLimit())) {
                 searchResult = srh;
                 return;
             }
         }
 
-        searchResult = new SearchResultHistory(new Date(), searchWebPages());
+        searchResult = new SearchResultHistory(new Date(), searchWebPages(), getMaxSearchLimit());
         searchHistory.put(ssh, searchResult);
     }
 
@@ -176,16 +177,14 @@ public class MotherSpider {
     public static class SearchSettingHistory {
         String searchClass;
         String searchKeyword;
-        int maxSearchLimit;
 
-        SearchSettingHistory(String searchClass, String searchKeyword, int maxSearchPages) {
+        SearchSettingHistory(String searchClass, String searchKeyword) {
             this.searchClass = searchClass;
             this.searchKeyword = searchKeyword;
-            this.maxSearchLimit = maxSearchPages;
         }
 
         public String toString() {
-            return "class: " + searchClass + " keyword: " + searchKeyword + " max pages: " + maxSearchLimit;
+            return "class: " + searchClass + " keyword: " + searchKeyword;
         }
 
         private boolean isSameClass(SearchSettingHistory right) {
@@ -196,30 +195,28 @@ public class MotherSpider {
             return searchKeyword.equals(right.searchKeyword);
         }
 
-        private boolean isSameMaxLimit(SearchSettingHistory right) {
-            return maxSearchLimit == right.maxSearchLimit;
-        }
-
         public boolean equals(Object o) {
             if (o instanceof SearchSettingHistory) {
                 SearchSettingHistory right = (SearchSettingHistory) o;
-                return isSameClass(right) && isSameKeyword(right) && isSameMaxLimit(right);
+                return isSameClass(right) && isSameKeyword(right);
             }
             return false;
         }
 
         public int hashCode() {
-            return searchClass.hashCode() + searchKeyword.hashCode() + maxSearchLimit;
+            return searchClass.hashCode() + searchKeyword.hashCode();
         }
     }
 
     public static class SearchResultHistory {
         Date date;
         WebPageInfo[] wpsInfo; // wps: webPages
+        int maxSearchLimit;
 
-        SearchResultHistory(Date date, WebPageInfo[] pagesInfo) {
+        SearchResultHistory(Date date, WebPageInfo[] pagesInfo, int maxSearchPages) {
             this.date = date;
             this.wpsInfo = pagesInfo;
+            this.maxSearchLimit = maxSearchPages;
         }
     }
 }
