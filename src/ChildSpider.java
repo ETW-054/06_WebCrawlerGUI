@@ -17,7 +17,7 @@ public class ChildSpider extends Thread {
         if (!leg.isCrawl(currentUrl)) {
             return;
         }
-        commander.addToVisitLinks(leg.getLinks(commander.searchClass));
+        commander.addToVisitLinks(leg.getLinks(commander.wpCommand.toString()));
 
         WebPageInfo page = leg.getPageInfo();
 

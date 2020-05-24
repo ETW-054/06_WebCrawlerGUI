@@ -2,7 +2,7 @@ import java.util.Comparator;
 
 public class WebPageInfo implements Comparable, Comparator {
     String title = "";
-    String link = null;
+    String link = "";
     int weight = 0;
     int keywordCount = 0;
 

@@ -9,7 +9,7 @@ public class ChildSpidersCommander extends Thread {
     protected final List<String> linksToVisit = new LinkedList<>();
     protected final Set<WebPageInfo> usefulPages = new HashSet<>();
 
-    protected final String searchClass;
+    protected final WebPageCommand wpCommand;
     protected final String searchKeyword;
     protected final int maxPages;
     protected final int maxThreads;
@@ -17,7 +17,7 @@ public class ChildSpidersCommander extends Thread {
 
     public ChildSpidersCommander(String searchKeyword, String searchClass, int maxPages, int maxThreads) {
         this.searchKeyword = searchKeyword;
-        this.searchClass = searchClass;
+        this.wpCommand = WebPageCommand.valueOf(searchClass);
         this.maxPages = maxPages;
         this.maxThreads = maxThreads;
     }
@@ -26,34 +26,8 @@ public class ChildSpidersCommander extends Thread {
         return usefulPages;
     }
 
-    private List<String> getNewsUrl() {
-        return new LinkedList<>() {{
-            add("https://www.google.com/search?q="+ searchKeyword + "&safe=strict&tbm=nws&start=0");
-            add("https://www.google.com/search?q="+ searchKeyword + "&safe=strict&tbm=nws&start=10");
-            add("https://www.google.com/search?q="+ searchKeyword + "&safe=strict&tbm=nws&start=20");
-        }};
-    }
-
-    private List<String> getYoutubeUrl() {
-        return new LinkedList<>() {{
-            add("https://www.youtube.com/results?search_query="+ searchKeyword);
-        }};
-    }
-
-    private List<String> getShoppingUrl() {
-        return new LinkedList<>() {{
-            add("https://www.youtube.com/results?search_query="+ searchKeyword);
-        }};
-    }
-
     private void setToVisitPages() {
-        if (searchClass.equals("新聞")) {
-            linksToVisit.addAll(getNewsUrl());
-        } else if (searchClass.equals("Youtube")) {
-            linksToVisit.addAll(getYoutubeUrl());
-        } else if (searchClass.equals("購物")) {
-            linksToVisit.addAll(getShoppingUrl());
-        }
+        linksToVisit.addAll(wpCommand.getDefaultUrl(searchKeyword));
     }
 
     public void addToVisitLinks(List<String> links) {
@@ -67,15 +41,7 @@ public class ChildSpidersCommander extends Thread {
     }
 
     private boolean isDefaultLink(String link) {
-        Pattern pattern = Pattern.compile("(https://www.google.com/search\\?q=|" +
-                "https://www.youtube.com/results\\?search_query=).*");
-        Matcher matcher = pattern.matcher(link);
-
-        return matcher.find();
-    }
-
-    private boolean isSamePage(WebPageInfo left, WebPageInfo right) {
-        return left.title.equals(right.title) || left.link.equals(right.link);
+        return wpCommand.isDefaultUrl(link);
     }
 
     public void addUsefulPage(WebPageInfo newPage) {

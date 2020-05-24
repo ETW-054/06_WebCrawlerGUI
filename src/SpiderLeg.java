@@ -4,8 +4,6 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class SpiderLeg {
     private static final String USER_AGENT = "Chrome/81.0.4044.138";
@@ -52,13 +50,8 @@ public class SpiderLeg {
     }
 
     private void handleLinks(String searchClass) {
-        if (searchClass.equals("新聞")) {
-            handleNewLinks();
-        } else if (searchClass.equals("Youtube")) {
-            handleYoutubeLinks();
-        } else if (searchClass.equals("購物")) {
-            handleShoppingLinks();
-        }
+        WebPageCommand wpc = WebPageCommand.valueOf(searchClass);
+        links.addAll(wpc.handleLink(htmlDocument));
     }
 
     public List<String> getLinks(String searchClass) {

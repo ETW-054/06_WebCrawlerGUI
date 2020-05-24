@@ -1,3 +1,4 @@
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -6,7 +7,7 @@ import static java.lang.Integer.min;
 public class MotherSpider {
     private final WebCrawlerGUI gui;
     protected ConcurrentHashMap<SearchSettingHistory, SearchResultHistory> searchHistory = new ConcurrentHashMap<>();
-    private WebPageInfo[] searchResult;
+    private SearchResultHistory searchResult;
     private int currentPageCount;
     private int maxPageCount;
     private int pageLimit;
@@ -55,17 +56,33 @@ public class MotherSpider {
         return searchResultTemp;
     }
 
+    private boolean isUpdateToDate(Date historyDate) {
+        SimpleDateFormat sdFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        String history = sdFormat.format(historyDate);
+        String current = sdFormat.format(new Date());
+        try {
+            long hTime = sdFormat.parse(history).getTime();
+            long cTime = sdFormat.parse(current).getTime();
+            long diffTime = (cTime - hTime) / 1000; // ms to s
+            return diffTime < 300; // 大於5分鐘就重找
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private void findPages() {
         SearchSettingHistory ssh = new SearchSettingHistory(getSearchClass(), getSearchKeyword(), getMaxSearchLimit());
 
         if (searchHistory.containsKey(ssh)) {
-            searchResult =  searchHistory.get(ssh).wpsInfo;
-            return;
+            SearchResultHistory srh =  searchHistory.get(ssh);
+            if (isUpdateToDate(srh.date) && srh.wpsInfo.length > 0) {
+                searchResult = srh;
+                return;
+            }
         }
 
-        searchResult = searchWebPages();
-        SearchResultHistory srh = new SearchResultHistory(new Date(), searchResult);
-        searchHistory.put(ssh, srh);
+        searchResult = new SearchResultHistory(new Date(), searchWebPages());
+        searchHistory.put(ssh, searchResult);
     }
 
     private void setTotalSearchedPagesNumberLabel(String text) {
@@ -74,10 +91,11 @@ public class MotherSpider {
 
     private void setSearchResultTable(int pageCount) {
         currentPageCount = pageCount;
-        int maxLimit = min((currentPageCount + 1) * pageLimit, searchResult.length);
+        WebPageInfo[] result = searchResult.wpsInfo;
+        int maxLimit = min((currentPageCount + 1) * pageLimit, result.length);
 
         for (int i = currentPageCount * pageLimit; i < maxLimit; i++) {
-            Object[] objects = { i + 1, searchResult[i].title, searchResult[i].link, searchResult[i].weight };
+            Object[] objects = { i + 1, result[i].title, result[i].link, result[i].weight };
             addSearchResultTableRow(objects);
         }
     }
@@ -91,14 +109,14 @@ public class MotherSpider {
     }
 
     public void toFirstPage() {
-        if (searchResult.length == 0) { return; }
+        if (searchResult.wpsInfo.length == 0) { return; }
         removeAllSearchResultTableRow();
         setSearchResultTable(0);
         setCurrentPageNumberLabel(currentPageCount + 1);
     }
 
     public void toFrontPage() {
-        if (searchResult.length == 0) { return; }
+        if (searchResult.wpsInfo.length == 0) { return; }
         removeAllSearchResultTableRow();
         if (currentPageCount == 0) {
             setSearchResultTable(0);
@@ -109,7 +127,7 @@ public class MotherSpider {
     }
 
     public void toNextPage() {
-        if (searchResult.length == 0) { return; }
+        if (searchResult.wpsInfo.length == 0) { return; }
         removeAllSearchResultTableRow();
         if (currentPageCount == maxPageCount) {
             setSearchResultTable(maxPageCount);
@@ -120,24 +138,30 @@ public class MotherSpider {
     }
 
     public void toLastPage() {
-        if (searchResult.length == 0) { return; }
+        if (searchResult.wpsInfo.length == 0) { return; }
         removeAllSearchResultTableRow();
         setSearchResultTable(maxPageCount);
         setCurrentPageNumberLabel(currentPageCount + 1);
     }
 
     public void setPageLimit(int pageLimit) {
-        if (searchResult.length == 0) { return; }
+        if (searchResult.wpsInfo.length == 0) { return; }
         this.pageLimit = pageLimit;
-        maxPageCount = (searchResult.length - 1) / pageLimit;
+        maxPageCount = (searchResult.wpsInfo.length - 1) / pageLimit;
         toFirstPage();
+    }
+
+    private void setSnapshotLabel() {
+        SimpleDateFormat sdFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        gui.setSnapshotLabel(sdFormat.format(searchResult.date));
     }
 
     private void showSearchResult() {
         removeAllSearchResultTableRow();
-        setTotalSearchedPagesNumberLabel(String.valueOf(searchResult.length));
+        setTotalSearchedPagesNumberLabel(String.valueOf(searchResult.wpsInfo.length));
         setPageLimit(gui.getPageLimit());
-        if (searchResult.length == 0) {
+        setSnapshotLabel();
+        if (searchResult.wpsInfo.length == 0) {
             setCurrentPageNumberLabelZero();
         }
     }
