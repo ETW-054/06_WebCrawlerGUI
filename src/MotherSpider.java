@@ -82,11 +82,19 @@ public class MotherSpider {
         }
     }
 
+    private void setCurrentPageNumberLabelZero() {
+        gui.setCurrentPageNumberLabel("0 / 0");
+    }
+
+    private void setCurrentPageNumberLabel(int pageCount) {
+        gui.setCurrentPageNumberLabel(pageCount + " / " + (maxPageCount + 1));
+    }
+
     public void toFirstPage() {
         if (searchResult.length == 0) { return; }
         removeAllSearchResultTableRow();
         setSearchResultTable(0);
-        gui.setCurrentPageNumberLabel(currentPageCount + 1);
+        setCurrentPageNumberLabel(currentPageCount + 1);
     }
 
     public void toFrontPage() {
@@ -97,7 +105,7 @@ public class MotherSpider {
         } else {
             setSearchResultTable(--currentPageCount);
         }
-        gui.setCurrentPageNumberLabel(currentPageCount + 1);
+        setCurrentPageNumberLabel(currentPageCount + 1);
     }
 
     public void toNextPage() {
@@ -108,14 +116,14 @@ public class MotherSpider {
         } else {
             setSearchResultTable(++currentPageCount);
         }
-        gui.setCurrentPageNumberLabel(currentPageCount + 1);
+        setCurrentPageNumberLabel(currentPageCount + 1);
     }
 
     public void toLastPage() {
         if (searchResult.length == 0) { return; }
         removeAllSearchResultTableRow();
         setSearchResultTable(maxPageCount);
-        gui.setCurrentPageNumberLabel(currentPageCount + 1);
+        setCurrentPageNumberLabel(currentPageCount + 1);
     }
 
     public void setPageLimit(int pageLimit) {
@@ -126,9 +134,12 @@ public class MotherSpider {
     }
 
     private void showSearchResult() {
+        removeAllSearchResultTableRow();
         setTotalSearchedPagesNumberLabel(String.valueOf(searchResult.length));
         setPageLimit(gui.getPageLimit());
-        gui.setCurrentPageNumberLabel(currentPageCount + 1);
+        if (searchResult.length == 0) {
+            setCurrentPageNumberLabelZero();
+        }
     }
 
     public void assignChildSpiders() {

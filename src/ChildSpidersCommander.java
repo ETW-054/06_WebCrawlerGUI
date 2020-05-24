@@ -84,7 +84,7 @@ public class ChildSpidersCommander extends Thread {
         }
 
         for (WebPageInfo page:usefulPages) {
-            if (isSamePage(page, newPage)) {
+            if (newPage.equals(page)) {
                 return;
             }
         }

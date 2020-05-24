@@ -162,8 +162,8 @@ public class WebCrawlerGUI extends JDialog {
         totalSearchedWebPagesLabel.setText(text);
     }
 
-    public void setCurrentPageNumberLabel(int pageNumber) {
-        currentPageNumberLabel.setText(String.valueOf(pageNumber));
+    public void setCurrentPageNumberLabel(String text) {
+        currentPageNumberLabel.setText(text);
     }
 
     /**

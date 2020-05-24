@@ -35,35 +35,13 @@ public class SpiderLeg {
     }
 
     private void handleNewLinks() {
-        Elements linksOnPage = htmlDocument.select("a[href]");
-        Pattern pattern = Pattern.compile("(https://tw.news.yahoo.com/|https://udn.com/news/|https://udn.com/|" +
-                "https://www.chinatimes.com/|https://news.ltn.com.tw/|https://talk.ltn.com.tw/|" +
-                "https://www.ettoday.net/|https://www.setn.com/|https://www.cna.com.tw/|https://www.epochtimes.com/|" +
-                "https://tw.appledaily.com/|https://money.udn.com/|https://www.ttv.com.tw/|" +
-                "https://newtalk.tw/|https://www.thenewslens.com/|https://www.storm.mg/)([^&]|[0-9A-Za-z~!@#$%^*()\\-+=])*");
-        Matcher matcher;
-
-        // 將符合上述regular expression的網址加入 to visit list
-        for (Element link : linksOnPage) {
-            matcher = pattern.matcher(link.absUrl("href"));
-            while (matcher.find()) {
-                links.add(matcher.group());
-            }
-        }
+        WebPageCommand wpc = WebPageCommand.NEWS;
+        links.addAll(wpc.handleLink(htmlDocument));
     }
 
     private void handleYoutubeLinks() {
-        Elements linksOnPage = htmlDocument.select("a[href]");
-        Pattern pattern = Pattern.compile("https://www.youtube.com/watch\\?.*");
-        Matcher matcher;
-
-        // 將符合上述regular expression的網址加入 to visit list
-        for (Element link : linksOnPage) {
-            matcher = pattern.matcher(link.absUrl("href"));
-            while (matcher.find()) {
-                links.add(matcher.group());
-            }
-        }
+        WebPageCommand wpc = WebPageCommand.YOUTUBE;
+        links.addAll(wpc.handleLink(htmlDocument));
     }
 
     private void handleShoppingLinks() {
@@ -89,31 +67,22 @@ public class SpiderLeg {
     }
 
     private int countKeyword() {
-        int count = 0;
-        String[] spt = searchKeyword.split("\\s+"); // 關鍵字有可能是以空白分開，因此這邊要將其拆開搜尋
-        for (String s:spt) {
-            Pattern pattern = Pattern.compile(s.toLowerCase());
-            Matcher matcher = pattern.matcher(htmlDocument.toString().toLowerCase());
-            while (matcher.find()) {
-                count++;
-            }
-        }
-        return count;
+        return WebPageCommand.NEWS.getWeight(htmlDocument, searchKeyword);
     }
 
     public WebPageInfo getPageInfo() {
-        WebPageInfo pageInfo = new WebPageInfo();
-        pageInfo.link = url;
+        WebPageInfo wpInfo = new WebPageInfo();
+        wpInfo.link = url;
 
         Elements title = htmlDocument.select("title");
-        if (!title.isEmpty()) {
+        if (title.size() >= 1) {
             String[] spt = title.first().toString().split("<title>|</title>");
-            pageInfo.title = spt[1];
+            wpInfo.title = spt[1]; // spt[0] 為 "<title>" 前的字串，故要使用 spt[1] 來得到真正的 title
         }
-        pageInfo.keywordCount = countKeyword();
+        wpInfo.keywordCount = countKeyword();
+        wpInfo.weight = wpInfo.keywordCount;
+        //System.out.println(threadNumber + "title: " + wpInfo.title + " link: " + wpInfo.link);
 
-        //System.out.println(threadNumber + "title: " + pageInfo.title + " link: " + pageInfo.link);
-
-        return pageInfo;
+        return wpInfo;
     }
 }

@@ -56,7 +56,7 @@ public enum WebPageCommand implements Commandable {
         }
     };
 
-    public List<String> handleLink_(Document htmlDocument, String regex) {
+    private static List<String> handleLink_(Document htmlDocument, String regex) {
         List<String> links = new LinkedList<>();
         Elements linksOnPage = htmlDocument.select("a[href]");
         Pattern pattern = Pattern.compile(regex);
@@ -72,7 +72,7 @@ public enum WebPageCommand implements Commandable {
         return links;
     }
 
-    public boolean isDefaultUrl_(String link) {
+    private static boolean isDefaultUrl_(String link) {
         Pattern pattern = Pattern.compile("(https://www.google.com/search\\?q=|" +
                 "https://www.youtube.com/results\\?search_query=).*");
         Matcher matcher = pattern.matcher(link);
@@ -80,7 +80,7 @@ public enum WebPageCommand implements Commandable {
         return matcher.find();
     }
 
-    public int countKeyword_(Document htmlDocument, String keyword) {
+    private static int countKeyword_(Document htmlDocument, String keyword) {
         int count = 0;
         String[] spt = keyword.split("\\s+"); // 關鍵字有可能是以空白分開，因此這邊要將其拆開搜尋
         for (String s:spt) {
