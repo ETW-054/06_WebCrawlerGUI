@@ -111,7 +111,59 @@ public class WebCrawlerGUI extends JDialog {
         searchClassComboBox.setModel(dcbm);
     }
 
+    public void showSearchComplete(String msg) {
+        JOptionPane.showMessageDialog(null,
+                msg, "Search Complete!", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public void showWarning(String msg) {
+        JOptionPane.showMessageDialog(null, msg, "Warning", JOptionPane.WARNING_MESSAGE);
+    }
+
+    public void showError(String msg) {
+        JOptionPane.showMessageDialog(null, msg, "Warning", JOptionPane.ERROR_MESSAGE);
+    }
+
+    private boolean isInputCorrect() {
+        // 確認搜尋上限
+        try {
+            int temp = Integer.parseInt(searchLimitTextField.getText());
+
+            if (temp <= 0) {
+                showWarning("The search limit cannot be less than 0!");
+                searchLimitTextField.setToolTipText("1");
+                return false;
+            }
+        } catch (Exception e) {
+            showError("The search limit field error! Should be a value greater than 0!");
+            return false;
+        }
+
+        // 確認執行緒數量
+        try {
+            int temp = Integer.parseInt(searchThreadsTextField.getText());
+
+            if (temp <= 0) {
+                showWarning("The thread cannot be less than 0!");
+                searchThreadsTextField.setToolTipText("1");
+                return false;
+            }
+        } catch (Exception e) {
+            showError("The thread field error! Should be a value greater than 0!");
+            return false;
+        }
+
+        // 確認搜尋內容
+        if (searchKeywordTextField.getText().isEmpty() || searchKeywordTextField.getText().isBlank()) {
+            showError("The search keyword field cannot be empty or blank!");
+            searchKeywordTextField.setToolTipText("");
+            return false;
+        }
+        return true;
+    }
+
     private void onStartCrawl() {
+        if (!isInputCorrect()) { return; }
         motherSpider.assignChildSpiders();
     }
 
@@ -157,11 +209,6 @@ public class WebCrawlerGUI extends JDialog {
         for (int i = 0; i < rowCount; i++) {
             srtm.removeRow(0);
         }
-    }
-
-    public void showSearchComplete() {
-        JOptionPane.showMessageDialog(null,
-                "Search Complete!", "Search Complete!", JOptionPane.INFORMATION_MESSAGE);
     }
 
     public String getSearchClass() {

@@ -2,9 +2,9 @@ public class ChildSpider extends Thread {
     private final ChildSpidersCommander commander;
     private final String currentUrl;
 
-    public ChildSpider(ChildSpidersCommander motherSpider, String link) {
+    public ChildSpider(ChildSpidersCommander motherSpider, String url) {
         this.commander = motherSpider;
-        this.currentUrl = link;
+        this.currentUrl = url;
     }
 
     public void search() {
@@ -13,7 +13,7 @@ public class ChildSpider extends Thread {
         if (!leg.isCrawl(currentUrl)) {
             return;
         }
-        commander.addToVisitLinks(leg.getLinks());
+        commander.addToVisitLinks(leg.getUrls());
         commander.addUsefulPage(leg.getWebPageInfo());
     }
 

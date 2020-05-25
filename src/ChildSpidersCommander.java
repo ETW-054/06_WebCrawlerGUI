@@ -1,12 +1,11 @@
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 import static java.lang.Thread.sleep;
 
 public class ChildSpidersCommander extends Thread {
     protected final Set<ChildSpider> childSpiders = new HashSet<>();
-    protected final Set<String> linksVisited = new HashSet<>();
-    protected final List<String> linksToVisit = new LinkedList<>();
+    protected final Set<String> urlsVisited = new HashSet<>();
+    protected final List<String> urlsToVisit = new LinkedList<>();
     protected final Set<WebPageInfo> usefulPages = new HashSet<>();
 
     protected final WebPageCommand wpCommand;
@@ -26,26 +25,26 @@ public class ChildSpidersCommander extends Thread {
         return usefulPages;
     }
 
-    private void setToVisitPages() {
-        linksToVisit.addAll(wpCommand.getDefaultUrl(searchKeyword));
+    private void setToVisitUrls() {
+        urlsToVisit.addAll(wpCommand.getDefaultUrl(searchKeyword));
     }
 
-    public void addToVisitLinks(List<String> links) {
+    public void addToVisitLinks(List<String> urls) {
         synchronized (LOCK) {
-            for (String link : links) {
-                if (!linksToVisit.contains(link)) {
-                    linksToVisit.add(link);
+            for (String url : urls) {
+                if (!urlsToVisit.contains(url)) {
+                    urlsToVisit.add(url);
                 }
             }
         }
     }
 
-    private boolean isDefaultLink(String link) {
-        return wpCommand.isDefaultUrl(link);
+    private boolean isDefaultUrl(String url) {
+        return wpCommand.isDefaultUrl(url);
     }
 
     public void addUsefulPage(WebPageInfo newPage) {
-        if (isDefaultLink(newPage.link)) {
+        if (isDefaultUrl(newPage.url)) {
             return;
         }
 
@@ -58,22 +57,25 @@ public class ChildSpidersCommander extends Thread {
     }
 
     public String getNextUrl() {
-        String nextUrl;
-        nextUrl = linksToVisit.remove(0);
+        if (urlsToVisit.isEmpty()) { return ""; }
 
-        while (linksVisited.contains(nextUrl)) {
-            nextUrl = linksToVisit.remove(0);
+        String nextUrl;
+        nextUrl = urlsToVisit.remove(0);
+
+        while (urlsVisited.contains(nextUrl)) {
+            if (urlsToVisit.isEmpty()) { return ""; }
+            nextUrl = urlsToVisit.remove(0);
         }
 
-        if (!isDefaultLink(nextUrl)) {
-            linksVisited.add(nextUrl);
+        if (!isDefaultUrl(nextUrl)) {
+            urlsVisited.add(nextUrl);
         }
         return nextUrl;
     }
 
     private void create() {
         do {
-            while (childSpiders.size() < maxThreads && !linksToVisit.isEmpty() && linksVisited.size() < maxPages) {
+            while (childSpiders.size() < maxThreads && !urlsToVisit.isEmpty() && urlsVisited.size() < maxPages) {
                 synchronized (LOCK) {
                     ChildSpider cs = new ChildSpider(this, getNextUrl());
                     childSpiders.add(cs);
@@ -83,7 +85,7 @@ public class ChildSpidersCommander extends Thread {
             try {
                 sleep(100);
             } catch (Exception ignore) { }
-        } while ((!childSpiders.isEmpty() || !linksToVisit.isEmpty()) && linksVisited.size() < maxPages);
+        } while ((!childSpiders.isEmpty() || !urlsToVisit.isEmpty()) && urlsVisited.size() < maxPages);
     }
 
     private void waitForAllChildSpiderStop() {
@@ -95,7 +97,7 @@ public class ChildSpidersCommander extends Thread {
     }
 
     public void run() {
-        setToVisitPages();
+        setToVisitUrls();
         create();
         waitForAllChildSpiderStop();
     }

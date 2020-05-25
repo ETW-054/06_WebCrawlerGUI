@@ -1,7 +1,6 @@
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-
 import static java.lang.Integer.min;
 
 public class MotherSpider {
@@ -48,10 +47,13 @@ public class MotherSpider {
             commander.join();
         } catch (Exception ignore) { }
 
+        // 將 Set 轉成 Array
         Set<WebPageInfo> resultTemp = commander.getUsefulPages();
         WebPageInfo[] searchResultTemp = new WebPageInfo[resultTemp.size()];
-        resultTemp.toArray(searchResultTemp);
-        Arrays.sort(searchResultTemp);
+        try {
+            resultTemp.toArray(searchResultTemp);
+            Arrays.sort(searchResultTemp);
+        } catch (Exception ignore) { }
 
         return searchResultTemp;
     }
@@ -75,8 +77,8 @@ public class MotherSpider {
 
         if (searchHistory.containsKey(ssh)) {
             SearchResultHistory srh =  searchHistory.get(ssh);
-            // 時間不超過5分鐘 && 歷史記錄大於0筆 && 歷史記錄大於目前最大限制+5
-            if (isUpdateToDate(srh.date) && srh.wpsInfo.length > 0 && (srh.maxSearchLimit + 5 >= getMaxSearchLimit())) {
+            // 時間不超過5分鐘 && 歷史記錄大於目前最大限制+5
+            if (isUpdateToDate(srh.date) && (srh.maxSearchLimit + 5 >= getMaxSearchLimit())) {
                 searchResult = srh;
                 return;
             }
@@ -96,7 +98,7 @@ public class MotherSpider {
         int maxLimit = min((currentPageCount + 1) * pageLimit, result.length);
 
         for (int i = currentPageCount * pageLimit; i < maxLimit; i++) {
-            Object[] objects = { i + 1, result[i].title, result[i].link, result[i].weight };
+            Object[] objects = { i + 1, result[i].title, result[i].url, result[i].weight };
             addSearchResultTableRow(objects);
         }
     }
@@ -146,6 +148,7 @@ public class MotherSpider {
     }
 
     public void setPageLimit(int pageLimit) {
+        if (searchResult == null) { return; }
         if (searchResult.wpsInfo.length == 0) { return; }
         this.pageLimit = pageLimit;
         maxPageCount = (searchResult.wpsInfo.length - 1) / pageLimit;
@@ -170,10 +173,10 @@ public class MotherSpider {
     public void assignChildSpiders() {
         findPages();
         showSearchResult();
-        gui.showSearchComplete();
+        gui.showSearchComplete(searchResult.wpsInfo.length + " results found!");
     }
 
-    // store search setting that like search class, search keyword and max search pages
+    // 用來存 search class, search keyword
     public static class SearchSettingHistory {
         String searchClass;
         String searchKeyword;

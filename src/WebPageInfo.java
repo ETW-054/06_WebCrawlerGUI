@@ -2,27 +2,23 @@ import java.util.Comparator;
 
 public class WebPageInfo implements Comparable, Comparator {
     String title = "";
-    String link = "";
-    int weight = 0;
+    String url = "";
+    double weight = 0;
 
-    public WebPageInfo() {
-
-    }
-
-    public WebPageInfo(String title, String link) {
-        this.title = title;
-        this.link = link;
-    }
+    public WebPageInfo() { }
 
     @Override
     public int compareTo(Object o) {
-        int weightDiff = ((WebPageInfo)o).weight - this.weight;
-        return weightDiff;
+        return (int)(((WebPageInfo)o).weight - this.weight);
     }
 
     @Override
     public int compare(Object o1, Object o2) {
-        return ((WebPageInfo)o1).compareTo((WebPageInfo)o2);
+        return ((WebPageInfo)o1).compareTo(o2);
+    }
+
+    public String toString() {
+        return "title: " + title + " link: " + url + " weight: " + weight;
     }
 
     private boolean isSameTitle(WebPageInfo right) {
@@ -30,7 +26,7 @@ public class WebPageInfo implements Comparable, Comparator {
     }
 
     private boolean isSameLink(WebPageInfo right) {
-        return link.equals(right.link);
+        return url.equals(right.url);
     }
 
     public boolean equals(Object o) {
@@ -42,6 +38,6 @@ public class WebPageInfo implements Comparable, Comparator {
     }
 
     public int hashCode() {
-        return title.hashCode() + link.hashCode();
+        return title.hashCode() + url.hashCode();
     }
 }

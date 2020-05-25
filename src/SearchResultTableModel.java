@@ -7,7 +7,6 @@ import java.util.Vector;
 public class SearchResultTableModel extends DefaultTableModel {
     Class[] types = { Integer.class, String.class, String.class, Integer.class };
     String[] columns = { "No", "Web Name", "Web Url", "Weight" };
-    //Object[][] data = {{ 1, null, null, null }};
 
     public int getColumnCount() { return columns.length; }
     public String getColumnName(int col) { return columns[col]; }
