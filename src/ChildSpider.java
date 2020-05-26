@@ -18,9 +18,15 @@ public class ChildSpider extends Thread {
     }
 
     public void run() {
-        search();
-        synchronized (commander.LOCK) {
-            commander.childSpiders.remove(this);
-        }
+        try {
+            search();
+        } catch (Exception ignore) { }
+
+        boolean isRemoved;
+        do {
+            synchronized (commander.LOCK) {
+                isRemoved = commander.childSpiders.remove(this);
+            }
+        } while (!isRemoved);
     }
 }

@@ -29,6 +29,7 @@ public class WebCrawlerGUI extends JDialog {
     private JLabel searchSnapshotDateLabel;
 
     public WebCrawlerGUI() {
+        this.setTitle("Web Crawler GUI");
         $$$setupUI$$$();
         setContentPane(contentPane);
         setModal(true);
@@ -103,6 +104,8 @@ public class WebCrawlerGUI extends JDialog {
             }
         });
 
+
+
         // 設置 ComboBox 的值
         DefaultComboBoxModel<String> dcbm = new DefaultComboBoxModel<>();
         for (WebPageCommand wpc : WebPageCommand.values()) {
@@ -121,7 +124,7 @@ public class WebCrawlerGUI extends JDialog {
     }
 
     public void showError(String msg) {
-        JOptionPane.showMessageDialog(null, msg, "Warning", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(null, msg, "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     private boolean isInputCorrect() {
@@ -131,11 +134,12 @@ public class WebCrawlerGUI extends JDialog {
 
             if (temp <= 0) {
                 showWarning("The search limit cannot be less than 0!");
-                searchLimitTextField.setToolTipText("1");
+                searchLimitTextField.setText("1");
                 return false;
             }
         } catch (Exception e) {
             showError("The search limit field error! Should be a value greater than 0!");
+            searchLimitTextField.setText("1");
             return false;
         }
 
@@ -145,17 +149,18 @@ public class WebCrawlerGUI extends JDialog {
 
             if (temp <= 0) {
                 showWarning("The thread cannot be less than 0!");
-                searchThreadsTextField.setToolTipText("1");
+                searchThreadsTextField.setText("1");
                 return false;
             }
         } catch (Exception e) {
             showError("The thread field error! Should be a value greater than 0!");
+            searchThreadsTextField.setText("1");
             return false;
         }
 
         // 確認搜尋內容
         if (searchKeywordTextField.getText().isEmpty() || searchKeywordTextField.getText().isBlank()) {
-            showError("The search keyword field cannot be empty or blank!");
+            showWarning("The search keyword field cannot be empty or blank!");
             searchKeywordTextField.setToolTipText("");
             return false;
         }
@@ -163,7 +168,9 @@ public class WebCrawlerGUI extends JDialog {
     }
 
     private void onStartCrawl() {
-        if (!isInputCorrect()) { return; }
+        if (!isInputCorrect()) {
+            return;
+        }
         motherSpider.assignChildSpiders();
     }
 
@@ -177,9 +184,10 @@ public class WebCrawlerGUI extends JDialog {
         searchResultTable = new JTable(srtm);
         searchResultTable.setAutoResizeMode(JTable.AUTO_RESIZE_NEXT_COLUMN);
         searchResultTable.getColumnModel().getColumn(0).setPreferredWidth(20);
-        searchResultTable.getColumnModel().getColumn(1).setPreferredWidth(300);
-        searchResultTable.getColumnModel().getColumn(2).setPreferredWidth(300);
-        searchResultTable.getColumnModel().getColumn(3).setPreferredWidth(20);
+        searchResultTable.getColumnModel().getColumn(1).setPreferredWidth(200);
+        searchResultTable.getColumnModel().getColumn(2).setPreferredWidth(200);
+        searchResultTable.getColumnModel().getColumn(3).setPreferredWidth(200);
+        searchResultTable.getColumnModel().getColumn(4).setPreferredWidth(20);
     }
 
     public void execute() {

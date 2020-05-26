@@ -27,8 +27,8 @@ public enum WebPageCommand implements Commandable {
         public List<String> handleLink(Document htmlDocument) {
             String regex = "(https://tw.news.yahoo.com/|https://udn.com/news/|https://udn.com/|" +
                     "https://www.chinatimes.com/|https://news.ltn.com.tw/|https://talk.ltn.com.tw/|" +
-                    "https://www.ettoday.net/|https://www.setn.com/|https://www.cna.com.tw/|https://www.epochtimes.com/|" +
-                    "https://tw.appledaily.com/|https://money.udn.com/|https://www.ttv.com.tw/|" +
+                    "https://www.ettoday.net/|https://www.setn.com/|https://www.cna.com.tw/|" +
+                    "https://money.udn.com/|https://www.ttv.com.tw/|" +
                     "https://newtalk.tw/|https://www.thenewslens.com/|https://www.storm.mg/)([^&]|[0-9A-Za-z~!@#$%^*()\\-+=])+";
             return handleLink__(htmlDocument, regex);
         }
@@ -36,8 +36,15 @@ public enum WebPageCommand implements Commandable {
         public WebPageInfo getWebPageInfo(Document htmlDocument, String url, String keyword) {
             WebPageInfo wpInfo = getWebPageInfo__(htmlDocument, url);
             String text = htmlDocument.toString().toLowerCase();
-            wpInfo.weight = countKeyword__(text, keyword) + getTitleFactor__(wpInfo.title, keyword, 150) +
-                    getTimeFactor(text);
+
+            double keywordCount = countKeyword__(text, keyword);
+            String time = getTime(text);
+            double titleFactor = getTitleFactor__(wpInfo.title, keyword, 150);
+
+            wpInfo.weight = keywordCount + titleFactor + getTimeFactor(time);
+            wpInfo.info = "[time]: " + time + " [title contain keyword]: " + (titleFactor > 0 ? "yes" : "no") +
+                    " [keyword count]: " + keywordCount;
+
             return wpInfo;
         }
 
@@ -48,9 +55,32 @@ public enum WebPageCommand implements Commandable {
                 long hTime = sdFormat.parse(publishDate).getTime();
                 long cTime = sdFormat.parse(current).getTime();
                 return (cTime - hTime) / 1000; // ms to s
-            } catch (Exception e) {
-                return -1; // 抓不到時間
-            }
+            } catch (Exception ignore) { }
+
+            try {
+                SimpleDateFormat sdFormat = new SimpleDateFormat("yyyy年MM月dd日 上午HH:mm");
+                String current = sdFormat.format(new Date());
+                long hTime = sdFormat.parse(publishDate).getTime();
+                long cTime = sdFormat.parse(current).getTime();
+                return (cTime - hTime) / 1000; // ms to s
+            } catch (Exception ignore) { }
+
+            try {
+                SimpleDateFormat sdFormat = new SimpleDateFormat("yyyy年MM月dd日 下午HH:mm");
+                String current = sdFormat.format(new Date());
+                long hTime = sdFormat.parse(publishDate).getTime();
+                long cTime = sdFormat.parse(current).getTime();
+                return (cTime - hTime) / 1000; // ms to s
+            } catch (Exception ignore) { }
+
+            try {
+                SimpleDateFormat sdFormat = new SimpleDateFormat("yyyy.MM.dd | HH:mm");
+                String current = sdFormat.format(new Date());
+                long hTime = sdFormat.parse(publishDate).getTime();
+                long cTime = sdFormat.parse(current).getTime();
+                return (cTime - hTime) / 1000; // ms to s
+            } catch (Exception ignore) { }
+            return -1; // 抓不到時間
         }
 
         private double calculateTimeFactor_(double num) {
@@ -80,15 +110,27 @@ public enum WebPageCommand implements Commandable {
         }
 
         private double getTimeFactor(String text) {
-            if (text == null) { return 0; }
-            Pattern pattern = Pattern.compile("\\d\\d\\d\\d-\\d\\d-\\d\\d\\s\\d\\d:\\d\\d");
+            if (text.equals("-1")) {
+                return 0;
+            } else {
+                long timeDiff = getTimeDiff(text);
+                return calculateTimeFactor(timeDiff);
+            }
+        }
+
+        private String getTime(String text) {
+            if (text == null) { return "-1"; }
+            Pattern pattern = Pattern.compile("\\d\\d\\d\\d-\\d?\\d-\\d?\\d \\d?\\d:\\d?\\d|" +
+                    "\\d\\d\\d\\d年\\d?\\d月\\d?\\d日 上午\\d:\\d?\\d|" +
+                    "\\d\\d\\d\\d年\\d?\\d月\\d?\\d日 下午\\d:\\d?\\d|" +
+                    "\\d\\d\\d\\d.\\d?\\d.\\d?\\d \\| \\d?\\d:\\d?\\d|" +
+                    "\\d\\d\\d\\d\\/\\d?\\d\\/\\d?\\d \\d?\\d:\\d?\\d");
             Matcher matcher = pattern.matcher(text);
 
             if (matcher.find()) {
-                long timeDiff = getTimeDiff(matcher.group());
-                return calculateTimeFactor(timeDiff);
+                return matcher.group();
             } else {
-                return 0;
+                return "-1";
             }
         }
     },
@@ -114,8 +156,20 @@ public enum WebPageCommand implements Commandable {
             WebPageInfo wpInfo = getWebPageInfo__(htmlDocument, url);
             String text = htmlDocument.toString().toLowerCase();
 
-            wpInfo.weight = (countKeyword__(htmlDocument.toString().toLowerCase(), keyword) * 0.8 +
-                    getTitleFactor__(wpInfo.title, keyword, 20)) * getTimeFactor(text) * getViewFactor(text);
+            double keywordCount = countKeyword__(text, keyword);
+            double titleFactor = getTitleFactor__(wpInfo.title, keyword, 20);
+            String time = getTime(text);
+            double viewCount = getViewCount(text);
+            double likeCount = getLike(text);
+            double dislikeCount = getDislike(text);
+
+            wpInfo.weight = (keywordCount * 0.8 + titleFactor) * getTimeFactor(time) *
+                    getViewFactor(viewCount, likeCount, dislikeCount);
+            wpInfo.info = "[view count]: " + viewCount + " [like count]: " + likeCount +
+                    " [dislike count]: " + dislikeCount + " [time]: " + time +
+                    " [title contain keyword]: " + (titleFactor > 0 ? "yes" : "no") +
+                    " [keyword count]: " + keywordCount;
+
             return wpInfo;
         }
 
@@ -154,16 +208,23 @@ public enum WebPageCommand implements Commandable {
         }
 
         private double getTimeFactor(String text) {
-            if (text == null) { return 0; }
+            if (text.equals("-1")) {
+                return 0.55;
+            } else {
+                long timeDiff = getTimeDiff(text);
+                return calculateTimeFactor(timeDiff);
+            }
+        }
+
+        private String getTime(String text) {
+            if (text == null) { return "-1"; }
             Pattern pattern = Pattern.compile("\\d\\d\\d\\d年\\d?\\d月\\d\\d日");
             Matcher matcher = pattern.matcher(text);
 
             if (matcher.find()) {
-                String tt = matcher.group();
-                long timeDiff = getTimeDiff(tt);
-                return calculateTimeFactor(timeDiff);
+                return matcher.group();
             } else {
-                return 0.55;
+                return "-1";
             }
         }
 
@@ -177,21 +238,29 @@ public enum WebPageCommand implements Commandable {
             return 0;
         }
 
-        private double getLikeDislikeFactor(String text) {
+        private double getLike(String text) {
             Pattern likePattern = Pattern.compile("(\\d+,?)+ 人喜歡");
             Matcher likeMatcher = likePattern.matcher(text);
             double likeCount = 0;
-            Pattern dislikePattern = Pattern.compile("(\\d+,?)+ 人不喜歡");
-            Matcher dislikeMatcher = dislikePattern.matcher(text);
-            double dislikeCount = 0;
 
             if (likeMatcher.find()) { // 只有第一筆是標題的觀看次數，後面幾筆的是其它的
                 likeCount = getNumber__(likeMatcher.group());
             }
+            return likeCount;
+        }
+
+        private double getDislike(String text) {
+            Pattern dislikePattern = Pattern.compile("(\\d+,?)+ 人不喜歡");
+            Matcher dislikeMatcher = dislikePattern.matcher(text);
+            double dislikeCount = 0;
+
             if (dislikeMatcher.find()) {
                 dislikeCount = getNumber__(dislikeMatcher.group());
             }
+            return dislikeCount;
+        }
 
+        private double getLikeDislikeFactor(double likeCount, double dislikeCount) {
             if (likeCount + dislikeCount == 0) {
                 return 0.5;
             } else {
@@ -199,9 +268,9 @@ public enum WebPageCommand implements Commandable {
             }
         }
 
-        private double getViewFactor(String text) {
-            if (text == null) { return 0; }
-            return Math.log(getViewCount(text) * getLikeDislikeFactor(text));
+        private double getViewFactor(double viewCount, double likeCount, double dislikeCount) {
+            if (viewCount == 0) { return 1; }
+            return Math.log(viewCount * getLikeDislikeFactor(likeCount, dislikeCount));
         }
     },
 
@@ -232,20 +301,33 @@ public enum WebPageCommand implements Commandable {
         public WebPageInfo getWebPageInfo(Document htmlDocument, String url, String keyword) {
             WebPageInfo wpInfo = getWebPageInfo__(htmlDocument, url);
             String text = htmlDocument.toString().toLowerCase();
-            wpInfo.weight = countKeyword__(text, keyword) * 0.8 + getTitleFactor__(wpInfo.title, keyword, 120) -
-                    getPriceFactor(text);
-            System.out.println(wpInfo.toString());
+
+            double keywordCount = countKeyword__(text, keyword);
+            double titleFactor = getTitleFactor__(wpInfo.title, keyword, 120);
+            double price = getPrice(text);
+
+            wpInfo.weight = keywordCount * 0.8 + titleFactor - getPriceFactor(price);
+            wpInfo.info = "[price]: " + price + " [title contain keyword]: " + (titleFactor > 0 ? "yes" : "no") +
+                    " [keyword count]: " + keywordCount;
+
             return wpInfo;
         }
 
-        private double getPriceFactor(String text) {
-            if (text == null) { return 0; }
+        private double getPrice(String text) {
             Pattern pattern = Pattern.compile("\"price\":\"(\\d+,?)+\"");
             Matcher matcher = pattern.matcher(text);
 
             if (matcher.find()) {
+                return getNumber__(matcher.group());
+            } else {
+                return 0;
+            }
+        }
+
+        private double getPriceFactor(double price) {
+            if (price != 0) {
                 // 使用換底公式求 log1.2(price) = log2(price) / log2(1.2)
-                return Math.log(getNumber__(matcher.group())) / Math.log(1.2);
+                return Math.log(price / Math.log(1.2));
             } else {
                 return 100;
             }
@@ -297,19 +379,33 @@ public enum WebPageCommand implements Commandable {
         public WebPageInfo getWebPageInfo(Document htmlDocument, String url, String keyword) {
             WebPageInfo wpInfo = getWebPageInfo__(htmlDocument, url);
             String text = htmlDocument.toString().toLowerCase();
-            wpInfo.weight = countKeyword__(text, keyword) * 0.8 + getTitleFactor__(wpInfo.title, keyword, 120) -
-                    getPriceFactor(text);
+
+            double keywordCount = countKeyword__(text, keyword);
+            double titleFactor = getTitleFactor__(wpInfo.title, keyword, 150);
+            double price = getPrice(text);
+
+            wpInfo.weight = keywordCount * 0.8 + titleFactor - getPriceFactor(price);
+            wpInfo.info = "[price]: " + price + " [title contain keyword]: " + (titleFactor > 0 ? "yes" : "no") +
+                    " [keyword count]: " + keywordCount;
+
             return wpInfo;
         }
 
-        private double getPriceFactor(String text) {
-            if (text == null) { return 0; }
+        private double getPrice(String text) {
             Pattern pattern = Pattern.compile("\"price\":\\d*");
             Matcher matcher = pattern.matcher(text);
 
             if (matcher.find()) {
+                return getNumber__(matcher.group());
+            } else {
+                return 0;
+            }
+        }
+
+        private double getPriceFactor(double price) {
+            if (price != 0) {
                 // 使用換底公式求 log1.2(price) = log2(price) / log2(1.2)
-                return Math.log(getNumber__(matcher.group())) / Math.log(1.2);
+                return Math.log(price / Math.log(1.2));
             } else {
                 return 100;
             }
@@ -368,7 +464,7 @@ public enum WebPageCommand implements Commandable {
     }
 
     private static double getTitleFactor__(String title, String keyword, double reward) {
-        return title.contains(keyword) ? reward : 0;
+        return title.toLowerCase().contains(keyword.toLowerCase()) ? reward : 0;
     }
 
     private static double getNumber__(String str) {

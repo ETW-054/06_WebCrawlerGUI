@@ -4,12 +4,17 @@ public class WebPageInfo implements Comparable, Comparator {
     String title = "";
     String url = "";
     double weight = 0;
+    String info = "";
 
     public WebPageInfo() { }
 
     @Override
     public int compareTo(Object o) {
-        return (int)(((WebPageInfo)o).weight - this.weight);
+        try {
+            return (int) (((WebPageInfo) o).weight - this.weight);
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
     @Override

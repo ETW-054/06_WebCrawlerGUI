@@ -52,8 +52,8 @@ public class MotherSpider {
         WebPageInfo[] searchResultTemp = new WebPageInfo[resultTemp.size()];
         try {
             resultTemp.toArray(searchResultTemp);
-            Arrays.sort(searchResultTemp);
         } catch (Exception ignore) { }
+        Arrays.sort(searchResultTemp);
 
         return searchResultTemp;
     }
@@ -77,8 +77,9 @@ public class MotherSpider {
 
         if (searchHistory.containsKey(ssh)) {
             SearchResultHistory srh =  searchHistory.get(ssh);
-            // 時間不超過5分鐘 && 歷史記錄大於目前最大限制+5
-            if (isUpdateToDate(srh.date) && (srh.maxSearchLimit + 5 >= getMaxSearchLimit())) {
+            // 時間為最新時間 && 歷史最大搜尋限制大於等於目前最大限制+5 && 歷史最大搜尋限制大於等於歷史搜尋數量
+            if (isUpdateToDate(srh.date) && ((srh.maxSearchLimit + 5 >= getMaxSearchLimit()) ||
+                    (srh.maxSearchLimit >= srh.wpsInfo.length))) {
                 searchResult = srh;
                 return;
             }
@@ -98,7 +99,7 @@ public class MotherSpider {
         int maxLimit = min((currentPageCount + 1) * pageLimit, result.length);
 
         for (int i = currentPageCount * pageLimit; i < maxLimit; i++) {
-            Object[] objects = { i + 1, result[i].title, result[i].url, result[i].weight };
+            Object[] objects = { i + 1, result[i].title, result[i].url, result[i].info, (int)result[i].weight };
             addSearchResultTableRow(objects);
         }
     }
