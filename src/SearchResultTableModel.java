@@ -1,7 +1,4 @@
-import javax.swing.event.TableModelEvent;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableModel;
 import java.util.Vector;
 
 public class SearchResultTableModel extends DefaultTableModel {
@@ -23,5 +20,4 @@ public class SearchResultTableModel extends DefaultTableModel {
             fireTableCellUpdated(row, col);
         }
     }
-
 }

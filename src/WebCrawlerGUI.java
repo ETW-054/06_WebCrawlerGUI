@@ -114,7 +114,7 @@ public class WebCrawlerGUI extends JDialog {
         searchClassComboBox.setModel(dcbm);
     }
 
-    public void showSearchComplete(String msg) {
+    public void showInfo(String msg) {
         JOptionPane.showMessageDialog(null,
                 msg, "Search Complete!", JOptionPane.INFORMATION_MESSAGE);
     }
@@ -208,6 +208,14 @@ public class WebCrawlerGUI extends JDialog {
         return searchKeywordTextField.getText();
     }
 
+    public String getSearchClass() {
+        return Objects.requireNonNull(searchClassComboBox.getSelectedItem()).toString();
+    }
+
+    public int getPageLimit() {
+        return Integer.parseInt(pageLimitComboBox.getSelectedItem().toString());
+    }
+
     public void addSearchResultTableRow(Object[] objects) {
         srtm.addRow(objects);
     }
@@ -217,14 +225,6 @@ public class WebCrawlerGUI extends JDialog {
         for (int i = 0; i < rowCount; i++) {
             srtm.removeRow(0);
         }
-    }
-
-    public String getSearchClass() {
-        return Objects.requireNonNull(searchClassComboBox.getSelectedItem()).toString();
-    }
-
-    public int getPageLimit() {
-        return Integer.parseInt(pageLimitComboBox.getSelectedItem().toString());
     }
 
     public void setTotalSearchedWebPagesLabel(String text) {

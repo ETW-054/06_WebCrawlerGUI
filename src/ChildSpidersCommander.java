@@ -29,7 +29,7 @@ public class ChildSpidersCommander extends Thread {
         urlsToVisit.addAll(wpCommand.getDefaultUrl(searchKeyword));
     }
 
-    public void addToVisitLinks(List<String> urls) {
+    public void addToVisitUrls(List<String> urls) {
         synchronized (LOCK) {
             for (String url : urls) {
                 if (!urlsToVisit.contains(url)) {

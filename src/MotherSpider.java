@@ -174,7 +174,7 @@ public class MotherSpider {
     public void assignChildSpiders() {
         findPages();
         showSearchResult();
-        gui.showSearchComplete(searchResult.wpsInfo.length + " results found!");
+        gui.showInfo(searchResult.wpsInfo.length + " results found!");
     }
 
     // 用來存 search class, search keyword

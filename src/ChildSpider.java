@@ -13,7 +13,7 @@ public class ChildSpider extends Thread {
         if (!leg.isCrawl(currentUrl)) {
             return;
         }
-        commander.addToVisitLinks(leg.getUrls());
+        commander.addToVisitUrls(leg.getUrls());
         commander.addUsefulPage(leg.getWebPageInfo());
     }
 

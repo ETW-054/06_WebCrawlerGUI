@@ -18,21 +18,13 @@ public class WebPageInfo implements Comparable, Comparator {
     }
 
     @Override
-    public int compare(Object o1, Object o2) {
-        return ((WebPageInfo)o1).compareTo(o2);
-    }
+    public int compare(Object o1, Object o2) { return ((WebPageInfo)o1).compareTo(o2); }
 
-    public String toString() {
-        return "title: " + title + " link: " + url + " weight: " + weight;
-    }
+    public String toString() { return "title: " + title + " link: " + url + " weight: " + weight; }
 
-    private boolean isSameTitle(WebPageInfo right) {
-        return title.equals(right.title);
-    }
+    private boolean isSameTitle(WebPageInfo right) { return title.equals(right.title); }
 
-    private boolean isSameLink(WebPageInfo right) {
-        return url.equals(right.url);
-    }
+    private boolean isSameLink(WebPageInfo right) { return url.equals(right.url); }
 
     public boolean equals(Object o) {
         if (o instanceof WebPageInfo) {
@@ -42,7 +34,5 @@ public class WebPageInfo implements Comparable, Comparator {
         return false;
     }
 
-    public int hashCode() {
-        return title.hashCode() + url.hashCode();
-    }
+    public int hashCode() { return title.hashCode() + url.hashCode(); }
 }
