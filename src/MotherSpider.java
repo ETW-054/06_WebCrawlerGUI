@@ -77,9 +77,9 @@ public class MotherSpider {
 
         if (searchHistory.containsKey(ssh)) {
             SearchResultHistory srh =  searchHistory.get(ssh);
-            // 時間為最新時間 && 歷史最大搜尋限制大於等於目前最大限制+5 && 歷史最大搜尋限制大於等於歷史搜尋數量
-            if (isUpdateToDate(srh.date) && ((srh.maxSearchLimit + 5 >= getMaxSearchLimit()) ||
-                    (srh.maxSearchLimit >= srh.wpsInfo.length))) {
+            // 時間為最新時間 && (歷史最大搜尋限制大於目前最大限制+5 || 歷史最大搜尋限制大於歷史搜尋數量)
+            if (isUpdateToDate(srh.date) && ((srh.maxSearchLimit + 5 > getMaxSearchLimit()) ||
+                    (srh.maxSearchLimit > srh.wpsInfo.length))) {
                 searchResult = srh;
                 return;
             }
