@@ -27,13 +27,13 @@
 
 ### 介面說明
 剛啟動本系統時的介面。  
-![main gui](./readme_images/3_main_gui.png)  
+![main gui](./readme_images/2_main_gui.png)  
 
 搜尋設定細節。  
-![search setting](./readme_images/4_search_setting.png)
+![search setting](./readme_images/3_search_setting.png)
 
 搜尋類別項目，包含新聞、Youtube、購物、書籍等四個項目。  
-![search class](./readme_images/5_search_class.png)
+![search class](./readme_images/4_search_class.png)
 
 輸入完搜尋關鍵字後搜尋完畢的介面顯示。  
-![search complete](./readme_images/11_search_complete.png)
+![search complete](./readme_images/5_search_complete.png)
